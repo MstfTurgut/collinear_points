@@ -1,65 +1,63 @@
-
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 
 public class BruteCollinearPoints {
 
-    private final LineSegment[] segments;
+    private final ArrayList<LineSegment> lsList;
 
     public BruteCollinearPoints(Point[] points) {
 
-        if(points == null) {
+        if (points == null) {
             throw new IllegalArgumentException("Points array is null");
         }
 
-        if(containsNull(points)) {
+        if (containsNull(points)) {
             throw new IllegalArgumentException("One of the point in points array is null");
         }
 
-        Arrays.sort(points);
+        Point[] copyPoints = Arrays.copyOf(points, points.length);
 
-        if(containsDuplicate(points)) {
+        if (containsDuplicate(copyPoints)) {
             throw new IllegalArgumentException("Duplicated entries in given points");
         }
 
-        int N = points.length;
-        ArrayList<LineSegment> lsList = new ArrayList<>();
-        HashSet<Double> slopes = new HashSet<>();
+        Arrays.sort(copyPoints);
 
-        for(int i = 0; i < N-3;i++) {
-            for(int j = i + 1; j < N-2; j++) {
-                for(int k = j + 1; k < N-1; k++) {
-                    for(int o = k + 1; o < N; o++) {
-                        double slope1 = points[i].slopeTo(points[j]);
-                        double slope2 = points[i].slopeTo(points[k]);
-                        double slope3 = points[i].slopeTo(points[o]);
 
-                        if(slope1 == slope2 && slope2 == slope3) {
-                            LineSegment ls = new LineSegment(points[i], points[o]);
-                            if(!slopes.contains(slope1)) {
-                                lsList.add(ls);
-                                slopes.add(slope1);
-                            }
+        int N = copyPoints.length;
+        lsList = new ArrayList<>();
+
+        // BRUTE-FORCE WAY TO COMPUTE COLLINEAR POINTS
+        for (int i = 0; i < N-3;i++) {
+            for (int j = i + 1; j < N-2; j++) {
+                for (int k = j + 1; k < N-1; k++) {
+                    for (int o = k + 1; o < N; o++) {
+                        double slope1 = copyPoints[i].slopeTo(copyPoints[j]);
+                        double slope2 = copyPoints[i].slopeTo(copyPoints[k]);
+                        double slope3 = copyPoints[i].slopeTo(copyPoints[o]);
+
+                        if (slope1 == slope2 && slope2 == slope3) {
+                            LineSegment ls = new LineSegment(copyPoints[i], copyPoints[o]);
+                            lsList.add(ls);
                         }
                     }
                 }
             }
         }
-        segments = lsList.toArray(new LineSegment[0]);
     }
 
     public int numberOfSegments() {
-        return segments.length;
+        return lsList.size();
     }
 
     public LineSegment[] segments() {
-        return segments;
+        return lsList.toArray(new LineSegment[0]);
     }
 
     private boolean containsDuplicate(Point[] points) {
-        for(int i = 0; i < points.length - 1;i++) {
-            if(points[i].compareTo(points[i+1]) == 0) {
+        Arrays.sort(points);
+        for (int i = 0; i < points.length - 1;i++) {
+            if (points[i].compareTo(points[i+1]) == 0) {
                 return true;
             }
         }
@@ -67,8 +65,8 @@ public class BruteCollinearPoints {
     }
 
     private boolean containsNull(Point[] points) {
-        for(Point p : points) {
-            if(p == null) {
+        for (Point p : points) {
+            if (p == null) {
                 return true;
             }
         }

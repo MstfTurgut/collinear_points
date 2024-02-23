@@ -10,9 +10,10 @@ public class Test {
         Point p3 = new Point(3000,7000);
         Point p4 = new Point(7000,3000);
         Point p5 = new Point(20000,21000);
-        Point p6 = new Point(3000,4000);
-        Point p7 = new Point(14000,15000);
-        Point p8 = new Point(6000,7000);
+        Point p6 = new Point(3000, 4000);
+        Point p7 = new Point(14000, 15000);
+        Point p8 = new Point(6000, 7000);
+
 
         Point[] points = new Point[8];
         points[0] = p1;
@@ -24,6 +25,7 @@ public class Test {
         points[6] = p7;
         points[7] = p8;
 
+
         // draw the points
         StdDraw.enableDoubleBuffering();
         StdDraw.setXscale(0, 32768);
@@ -34,7 +36,7 @@ public class Test {
         StdDraw.show();
 
         // print and draw the line segments
-        BruteCollinearPoints collinear = new BruteCollinearPoints(points);
+        FastCollinearPoints collinear = new FastCollinearPoints(points);
         for (LineSegment segment : collinear.segments()) {
             StdOut.println(segment);
             segment.draw();

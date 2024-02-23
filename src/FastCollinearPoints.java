@@ -1,83 +1,90 @@
-
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class FastCollinearPoints {
 
-    private final LineSegment[] segments;
+    // Data structures for storing line segments and slopes
+    private final ArrayList<LineSegment> lineSegments = new ArrayList<>();
+    private final HashMap<Double, HashSet<Point>> lines = new HashMap<>();
 
+    /*
+     * Constructs a FastCollinearPoints object and finds all collinear line segments.
+     */
     public FastCollinearPoints(Point[] points) {
 
-        if(points == null) {
+        // Input validation
+        if (points == null) {
             throw new IllegalArgumentException("Points array is null");
         }
-
-        if(containsNull(points)) {
-            throw new IllegalArgumentException("One of the point in points array is null");
+        if (containsNull(points)) {
+            throw new IllegalArgumentException("One of the points in the array is null");
+        }
+        Point[] sortedPoints = Arrays.copyOf(points, points.length);
+        Arrays.sort(sortedPoints);
+        if (containsDuplicate(sortedPoints)) {
+            throw new IllegalArgumentException("Duplicate entries in given points");
         }
 
-        if(containsDuplicate(points)) {
-            throw new IllegalArgumentException("Duplicated entries in given points");
-        }
+        // Iterate through each point and find collinear segments
+        for (int i = 0; i < sortedPoints.length - 1; i++) {
+            Point p = sortedPoints[i];
 
-        int N = points.length;
-        ArrayList<LineSegment> lsList = new ArrayList<>();
-        Point[] copyPoints = Arrays.copyOf(points, N);
-
-        HashSet<Double> slopes = new HashSet<>();
-
-        Arrays.sort(points);
-
-        for(Point p: points) {
-            Arrays.sort(copyPoints);
+            // Create a copy of the remaining points and sort them by slope with p
+            Point[] copyPoints = new Point[points.length - i - 1];
+            System.arraycopy(sortedPoints, i + 1, copyPoints, 0, copyPoints.length);
             Arrays.sort(copyPoints, p.slopeOrder());
 
-            // search for adjacency
-            // sliding window technique
+            // Process the sorted copy array to find collinear segments
+            int equalityStrike = 0;
+            for (int s = 0; s < copyPoints.length - 1; s++) {
+                double slope1 = p.slopeTo(copyPoints[s]);
+                double slope2 = p.slopeTo(copyPoints[s + 1]);
 
-            HashSet<Double> set = new HashSet<>();
-
-            int windowStart = 0;
-            for(int windowEnd = 0; windowEnd < N ; windowEnd++) {
-
-                set.add(p.slopeTo(copyPoints[windowEnd]));
-                if (set.size() == 2) {
-
-                    if(windowEnd - windowStart >= 3 && !slopes.contains(p.slopeTo(copyPoints[windowStart]))) {
-
-                        LineSegment ls = new LineSegment(p , copyPoints[windowEnd - 1]);
-
-                        lsList.add(ls);
-
-                        slopes.add(p.slopeTo(copyPoints[windowStart]));
-                        set.remove(p.slopeTo(copyPoints[windowStart]));
-
-                        windowStart = windowEnd;
+                if (slope1 == slope2) {
+                    equalityStrike++;
+                } else {
+                    if (equalityStrike >= 2 && isLineValid(slope1, copyPoints[s])) {
+                        LineSegment lineSegment = new LineSegment(p, copyPoints[s]);
+                        addLine(slope1, copyPoints[s]);
+                        lineSegments.add(lineSegment);
                     }
-                    set.remove(p.slopeTo(copyPoints[windowStart++]));
-
+                    equalityStrike = 0;
                 }
-
-
             }
-
+            if (equalityStrike >= 2 && isLineValid(p.slopeTo(copyPoints[copyPoints.length - 1]), copyPoints[copyPoints.length - 1])) {
+                LineSegment lineSegment = new LineSegment(p, copyPoints[copyPoints.length - 1]);
+                addLine(p.slopeTo(copyPoints[copyPoints.length - 1]), copyPoints[copyPoints.length - 1]);
+                lineSegments.add(lineSegment);
+            }
         }
-
-        segments = lsList.toArray(new LineSegment[0]);
-
     }
 
-    public int numberOfLineSegment() {
-        return segments.length;
+    private void addLine(double slope, Point endPoint) {
+        HashSet<Point> endPoints;
+        HashSet<Point> slopeEndPoints = lines.get(slope);
+        if(slopeEndPoints != null) endPoints = slopeEndPoints;
+        else endPoints = new HashSet<>();
+        endPoints.add(endPoint);
+        lines.put(slope, endPoints);
+    }
+
+    private boolean isLineValid(double slope, Point endPoint) {
+        HashSet<Point> endPoints = lines.get(slope);
+        if(endPoints == null) return true;
+        else return !endPoints.contains(endPoint);
+    }
+
+    public int numberOfSegments() {
+        return lineSegments.size();
     }
 
     public LineSegment[] segments() {
-        return segments;
+        return lineSegments.toArray(new LineSegment[0]);
     }
 
     private boolean containsDuplicate(Point[] points) {
-        Arrays.sort(points);
         for(int i = 0; i < points.length - 1;i++) {
             if(points[i].compareTo(points[i+1]) == 0) {
                 return true;
